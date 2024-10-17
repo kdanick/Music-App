@@ -17,50 +17,73 @@ total_duration = 230  # Set this to the actual track duration in seconds
 is_playing = False
 start_time = 0
 
-# Function to update timer labels
 def update_timer():
+    global is_playing  # Ensure we are referring to the global is_playing variable
     if is_playing:
         elapsed_time = time.time() - start_time  # Calculate elapsed time
         current_time = time.strftime("%M:%S", time.gmtime(elapsed_time))
-        total_time = time.strftime("%M:%S", time.gmtime(total_duration))
+        total_time = time.strftime("%M:%S", time.gmtime(total_duration))  # Display the total track duration
 
         current_time_label.configure(text=current_time)
-        total_time_label.configure(text=total_time)
+        total_time_label.configure(text=total_time)  # Always show total time
 
-        # Update the progress bar
-        progress_bar.set(elapsed_time / total_duration)
+        if elapsed_time < total_duration:
+            progress_bar.set(elapsed_time / total_duration)
+            root.after(1000, update_timer)  # Update every second
+        else:
+            progress_bar.set(1.0)
+            is_playing = False
+            play_pause_button.configure(text="▶ Play")
 
-        root.after(1000, update_timer)  # Call this function again after 1 second
+
 
 def toggle_play_pause():
     global is_playing, start_time
     is_playing = not is_playing
+
     if is_playing:
-        if start_time == 0:  # If this is a new play
+        if start_time == 0:  # New play
             pygame.mixer.music.load("music/MY POWER (Official Audio).mp3")
             pygame.mixer.music.play(loops=0)
             start_time = time.time()  # Record the start time
             play_pause_button.configure(text="❚❚ Pause")
             update_timer()  # Start updating the timer
-        else:
-            pygame.mixer.music.unpause()  # Resume from the paused position
+        else:  # Resume from pause
+            pygame.mixer.music.unpause()
             play_pause_button.configure(text="❚❚ Pause")
-            start_time = time.time() - (progress_bar.get() * total_duration)  # Adjust start time for resuming
-            update_timer()  # Ensure timer updates on resume
-    else:
-        pygame.mixer.music.pause()  # Pause music
-        play_pause_button.configure(text="▶ Play")  # Update button text to "Play"
+            start_time = time.time() - (progress_bar.get() * total_duration)  # Adjust for resuming
+            update_timer()  # Resume timer updates
+    else:  # Pause the music
+        pygame.mixer.music.pause()
+        play_pause_button.configure(text="▶ Play")
+
 
 def set_progress(event):
-    new_value = (event.x / progress_bar.winfo_width())
+    new_value = (event.x / progress_bar.winfo_width())  # Get the new progress percentage
     progress_bar.set(new_value)
+
+    position = new_value * total_duration  # Calculate the new position in seconds
+
+    # Pause to set the position
+    pygame.mixer.music.pause()
+    pygame.mixer.music.set_pos(position)  # Set the position in the track
+
+    # Adjust the start_time to continue from the new position
+    global start_time
+    start_time = time.time() - position  # Adjust start time for resuming
+
+    # Resume if the music was playing
     if is_playing:
-        pygame.mixer.music.pause()  # Pause music to set position
-        position = new_value * total_duration  # Calculate the new position in seconds
-        pygame.mixer.music.play(start=position)  # Start playing from the new position
-        global start_time
-        start_time = time.time() - position  # Adjust start time
-        update_timer()  # Update the timer display
+        pygame.mixer.music.unpause()
+        update_timer()  # Update the timer immediately
+
+def set_volume(value):
+    volume = float(value) / 100  # Scale the value to be between 0 and 1
+    pygame.mixer.music.set_volume(volume)
+
+# Connect this to the volume slider command
+volume_slider = ctk.CTkSlider(root, from_=0, to=100, command=set_volume)
+
 
 # Create Sidebar Frame
 def create_sidebar_frame():
@@ -136,7 +159,7 @@ def create_controls_frame():
     volume_label = ctk.CTkLabel(controls_frame, text="Volume", font=("Arial", 14))
     volume_label.grid(row=1, column=4, padx=(10, 5))
 
-    volume_slider = ctk.CTkSlider(controls_frame, from_=0, to=100, command=lambda value: print(f"Volume set to {value}"))
+    volume_slider = ctk.CTkSlider(controls_frame, from_=0, to=100, command=set_volume)
     volume_slider.grid(row=1, column=5, padx=(0, 10), sticky="ew")
     volume_slider.configure(width=150)
 
@@ -150,9 +173,6 @@ controls_frame = create_controls_frame()
 # Bind mouse click to set progress
 progress_bar.set(0)
 progress_bar.bind("<Button-1>", set_progress)
-
-# Start the timer
-update_timer()
 
 # Start the GUI main loop
 if __name__ == "__main__":
