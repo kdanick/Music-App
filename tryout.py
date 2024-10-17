@@ -10,12 +10,15 @@ root.title("Groove - Music Player")
 root.geometry("800x610")
 root.configure(padx=20, pady=20)
 
-# Total duration of the track
-total_duration = 230  # Set this to the actual track duration in seconds
-
 # Variable to track playback state
 is_playing = False
 start_time = 0
+
+track_name = "MY POWER (Official Audio)"
+
+# Load the audio file to get its duration
+sound = pygame.mixer.Sound(f"music/{track_name}.mp3")
+total_duration = sound.get_length()
 
 def update_timer():
     global is_playing  # Ensure we are referring to the global is_playing variable
@@ -43,7 +46,7 @@ def toggle_play_pause():
 
     if is_playing:
         if start_time == 0:  # New play
-            pygame.mixer.music.load("music/MY POWER (Official Audio).mp3")
+            pygame.mixer.music.load(f"music/{track_name}.mp3")
             pygame.mixer.music.play(loops=0)
             start_time = time.time()  # Record the start time
             play_pause_button.configure(text="❚❚ Pause")
@@ -117,7 +120,6 @@ def create_visual_frame():
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=2)
 
-    track_name = "Track Name"
     track_label = ctk.CTkLabel(visual_frame, text=f"Now Playing: {track_name}", font=("Arial", 18))
     track_label.pack(pady=(10, 20))
 
@@ -144,7 +146,7 @@ def create_controls_frame():
 
     global progress_bar
     progress_bar = ctk.CTkProgressBar(controls_frame)
-    progress_bar.grid(row=0, column=1, columnspan=5, sticky="ew", pady=(10, 0))
+    progress_bar.grid(row=0, column=0, columnspan=6, sticky="ew", pady=(10, 0), padx=(60,10))
 
     prev_button = ctk.CTkButton(controls_frame, text="◄◄", command=lambda: print("Previous Track"), width=50)
     prev_button.grid(row=1, column=1, padx=5, pady=20)
@@ -176,6 +178,6 @@ progress_bar.bind("<Button-1>", set_progress)
 
 # Start the GUI main loop
 if __name__ == "__main__":
-    ctk.set_appearance_mode("system")
+    ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
     root.mainloop()
