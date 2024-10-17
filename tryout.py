@@ -11,7 +11,9 @@ root.geometry("800x610")
 root.configure(padx=20, pady=20)
 
 # Total duration of the track
-total_duration = 230  # Set this to the actual track duration in seconds
+# total_duration = 231  # Set this to the actual track duration in seconds
+# Let's say you have made some changes and want to contribute
+# Just save the file and create a commit like how I'm going to do this
 
 # Variable to track playback state
 is_playing = False
