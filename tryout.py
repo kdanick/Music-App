@@ -14,10 +14,16 @@ root.configure(padx=20, pady=20)
 is_playing = False
 start_time = 0
 
-track_name = "MY POWER (Official Audio)"
+track_name = "MY POWER (Official Audio).mp3"
+
+scrolling_text = track_name + "   "  # Add space to loop back smoothly
+scroll_pos = 0  # Current position of the scrolling text
+direction = 1  # 1 for right, -1 for left
+label_width = 25  # Number of characters to display at a time
+space_padding = 5  # Additional space on each side
 
 # Load the audio file to get its duration
-sound = pygame.mixer.Sound(f"music/{track_name}.mp3")
+sound = pygame.mixer.Sound(f"music/{track_name}")
 total_duration = sound.get_length()
 
 def update_timer():
@@ -39,6 +45,23 @@ def update_timer():
             play_pause_button.configure(text="▶ Play")
 
 
+def update_scrolling_text():
+    global scroll_pos, direction
+
+    # Get the substring to display
+    display_text = scrolling_text[scroll_pos:scroll_pos + label_width]
+    track_label.configure(text=display_text)  # Update the label with the current text
+
+    # Update scroll position based on direction
+    scroll_pos += direction
+
+    # Check bounds to reverse direction if necessary
+    if scroll_pos >= len(scrolling_text) - label_width:
+        direction = -1  # Change direction to left
+    elif scroll_pos <= 0:
+        direction = 1  # Change direction to right
+
+    root.after(550, update_scrolling_text)
 
 def toggle_play_pause():
     global is_playing, start_time
@@ -46,7 +69,7 @@ def toggle_play_pause():
 
     if is_playing:
         if start_time == 0:  # New play
-            pygame.mixer.music.load(f"music/{track_name}.mp3")
+            pygame.mixer.music.load(f"music/{track_name}")
             pygame.mixer.music.play(loops=0)
             start_time = time.time()  # Record the start time
             play_pause_button.configure(text="❚❚ Pause")
@@ -130,39 +153,49 @@ def create_controls_frame():
     controls_frame = ctk.CTkFrame(root)
     controls_frame.grid(row=1, column=0, columnspan=2, pady=(0, 0), sticky="ew")
 
-    controls_frame.grid_columnconfigure(0, weight=1)
+    controls_frame.grid_columnconfigure(0, weight=0)
     controls_frame.grid_columnconfigure(1, weight=0)
-    controls_frame.grid_columnconfigure(2, weight=0)
+    controls_frame.grid_columnconfigure(2, weight=1)
     controls_frame.grid_columnconfigure(3, weight=0)
     controls_frame.grid_columnconfigure(4, weight=0)
     controls_frame.grid_columnconfigure(5, weight=0)
+    controls_frame.grid_columnconfigure(6, weight=1)
+    controls_frame.grid_columnconfigure(7, weight=1)
+    controls_frame.grid_columnconfigure(8, weight=0)
 
-    global current_time_label, total_time_label
+    global current_time_label, total_time_label, track_label  # Declare track_label as global
     current_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
     current_time_label.grid(row=0, column=0, padx=(10, 5), sticky="w")
 
     total_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
-    total_time_label.grid(row=0, column=6, padx=(5, 10), sticky="e")
+    total_time_label.grid(row=0, column=8, padx=(5, 10), sticky="e")
 
     global progress_bar
     progress_bar = ctk.CTkProgressBar(controls_frame)
-    progress_bar.grid(row=0, column=0, columnspan=6, sticky="ew", pady=(10, 0), padx=(60,10))
+    progress_bar.grid(row=0, column=0, columnspan=8, sticky="ew", pady=(10, 0), padx=(60,10))
+
+    # Create a frame to contain the marquee
+    marquee_frame = ctk.CTkFrame(controls_frame, width=300)  # Adjust width and height as needed
+    marquee_frame.grid(row=1, column=7, columnspan=2, sticky="ew", padx=10)
+
+    track_label = ctk.CTkLabel(marquee_frame, text="", font=("Arial", 14))
+    track_label.pack(pady=10, fill='x')  # Use pack for better positioning
 
     prev_button = ctk.CTkButton(controls_frame, text="◄◄", command=lambda: print("Previous Track"), width=50)
-    prev_button.grid(row=1, column=1, padx=5, pady=20)
+    prev_button.grid(row=1, column=3, padx=(10, 5), pady=20)
 
     global play_pause_button
     play_pause_button = ctk.CTkButton(controls_frame, text="▶ Play", command=toggle_play_pause, height=40)
-    play_pause_button.grid(row=1, column=2, padx=5, pady=20)
+    play_pause_button.grid(row=1, column=4, padx=5, pady=20)
 
     next_button = ctk.CTkButton(controls_frame, text="►►", command=lambda: print("Next Track"), width=50)
-    next_button.grid(row=1, column=3, padx=5, pady=20)
+    next_button.grid(row=1, column=5, padx=5, pady=20)
 
     volume_label = ctk.CTkLabel(controls_frame, text="Volume", font=("Arial", 14))
-    volume_label.grid(row=1, column=4, padx=(10, 5))
+    volume_label.grid(row=1, column=0, padx=(5, 0), sticky="e")
 
     volume_slider = ctk.CTkSlider(controls_frame, from_=0, to=100, command=set_volume)
-    volume_slider.grid(row=1, column=5, padx=(0, 10), sticky="ew")
+    volume_slider.grid(row=1, column=1, padx=(0, 10), sticky="ew")
     volume_slider.configure(width=150)
 
     return controls_frame
@@ -175,6 +208,8 @@ controls_frame = create_controls_frame()
 # Bind mouse click to set progress
 progress_bar.set(0)
 progress_bar.bind("<Button-1>", set_progress)
+
+update_scrolling_text()
 
 # Start the GUI main loop
 if __name__ == "__main__":
