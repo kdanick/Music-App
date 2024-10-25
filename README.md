@@ -10,4 +10,4 @@ Objectives:
     - To be ale to create a playlist (Adding and removing music from that playlist).
     - Have a good GUI
 
-            
+JOY's changes
