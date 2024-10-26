@@ -40,9 +40,36 @@ def update_timer():
             progress_bar.set(elapsed_time / total_duration)
             root.after(1000, update_timer)  # Update every second
         else:
-            progress_bar.set(1.0)
+            # Reset the progress bar and playback state
+            progress_bar.set(0.0)  # Reset progress bar to 0
+            current_time_label.configure(text="00:00")  # Reset current time to 00:00
             is_playing = False
             play_pause_button.configure(text="▶ Play")
+            pygame.mixer.music.stop()  # Stop music when it ends
+
+
+def toggle_play_pause():
+    global is_playing, start_time
+
+    if not is_playing:  # If the music is currently paused or stopped
+        is_playing = True
+
+        if progress_bar.get() == 0.0:  # Check if the progress bar is at 0 (track ended)
+            pygame.mixer.music.load(f"music/{track_name}")  # Load the music file
+            pygame.mixer.music.play(loops=0)  # Play the music from the beginning
+            start_time = time.time()  # Reset start_time to current time
+            play_pause_button.configure(text="❚❚ Pause")  # Change button text
+            update_timer()  # Start the timer updates
+        else:  # Resume from pause
+            pygame.mixer.music.unpause()  # Unpause the music
+            play_pause_button.configure(text="❚❚ Pause")  # Change button text
+            # Adjust start_time to account for the elapsed time
+            start_time = time.time() - (progress_bar.get() * total_duration)
+            update_timer()  # Resume the timer updates
+    else:  # If music is currently playing, pause it
+        is_playing = False
+        pygame.mixer.music.pause()  # Pause the music
+        play_pause_button.configure(text="▶ Play")  # Change button text
 
 
 def update_scrolling_text():
@@ -63,45 +90,38 @@ def update_scrolling_text():
 
     root.after(550, update_scrolling_text)
 
-def toggle_play_pause():
-    global is_playing, start_time
-    is_playing = not is_playing
-
-    if is_playing:
-        if start_time == 0:  # New play
-            pygame.mixer.music.load(f"music/{track_name}")
-            pygame.mixer.music.play(loops=0)
-            start_time = time.time()  # Record the start time
-            play_pause_button.configure(text="❚❚ Pause")
-            update_timer()  # Start updating the timer
-        else:  # Resume from pause
-            pygame.mixer.music.unpause()
-            play_pause_button.configure(text="❚❚ Pause")
-            start_time = time.time() - (progress_bar.get() * total_duration)  # Adjust for resuming
-            update_timer()  # Resume timer updates
-    else:  # Pause the music
-        pygame.mixer.music.pause()
-        play_pause_button.configure(text="▶ Play")
-
 
 def set_progress(event):
+    global is_playing  # Access the global variable
+
     new_value = (event.x / progress_bar.winfo_width())  # Get the new progress percentage
     progress_bar.set(new_value)
 
     position = new_value * total_duration  # Calculate the new position in seconds
 
-    # Pause to set the position
-    pygame.mixer.music.pause()
-    pygame.mixer.music.set_pos(position)  # Set the position in the track
-
-    # Adjust the start_time to continue from the new position
     global start_time
-    start_time = time.time() - position  # Adjust start time for resuming
 
-    # Resume if the music was playing
-    if is_playing:
-        pygame.mixer.music.unpause()
-        update_timer()  # Update the timer immediately
+    # Check if music is currently playing before setting position
+    if pygame.mixer.music.get_busy():  # Only proceed if music is playing
+        pygame.mixer.music.pause()  # Pause to set the position
+        pygame.mixer.music.set_pos(position)  # Set the position in the track
+
+        # Adjust start_time to continue from the new position
+        start_time = time.time() - position  # Adjust start time for resuming
+
+        # Resume if the music was playing
+        if is_playing:
+            pygame.mixer.music.unpause()
+            update_timer()  # Update the timer immediately
+    else:
+        # Music isn't playing, so we can restart it from the new position
+        pygame.mixer.music.load(f"music/{track_name}")
+        pygame.mixer.music.play(start=position)  # Start playing from the new position
+        start_time = time.time() - position
+        is_playing = True
+        update_timer()
+        play_pause_button.configure(text="❚❚ Pause")
+
 
 def set_volume(value):
     volume = float(value) / 100  # Scale the value to be between 0 and 1
