@@ -111,6 +111,10 @@ def open_playlists_window():
     playlists_frame = ctk.CTkFrame(playlists_window)
     playlists_frame.pack(pady=20, padx=20, fill="both", expand=True)
 
+    # Frame to display songs of a selected playlist
+    song_display_frame = ctk.CTkFrame(playlists_window)
+    song_display_frame.pack(pady=20, padx=20, fill="both", expand=True)
+
     # Refresh the list of playlists
     def refresh_playlists():
         for widget in playlists_frame.winfo_children():
@@ -123,13 +127,25 @@ def open_playlists_window():
     # Load playlists on startup
     refresh_playlists()
 
-    # Function to load a selected playlist
+    # Function to load a selected playlist and display songs
     def load_playlist(playlist_name):
         playlist_path = os.path.join("C:/Users/adhia/OneDrive/Documents/1st Year/MusicApp/music/", playlist_name)
-        songs = os.listdir(playlist_path)
-        print(f"Loading playlist: {playlist_name} with songs: {songs}")  # Placeholder for actual functionality
+        songs = [song for song in os.listdir(playlist_path) if song.endswith(('.mp3', '.wav'))]  # Filter music files
 
-    # Create a button to delete the selected playlist
+        # Clear previous song list in the song display frame
+        for widget in song_display_frame.winfo_children():
+            widget.destroy()
+
+        # Display the song names in the selected playlist
+        if songs:
+            for song in songs:
+                song_label = ctk.CTkLabel(song_display_frame, text=song, font=("Arial", 14))
+                song_label.pack(anchor="w", padx=10, pady=2)
+        else:
+            no_songs_label = ctk.CTkLabel(song_display_frame, text="No songs in this playlist.", font=("Arial", 14))
+            no_songs_label.pack(anchor="center", padx=10, pady=20)
+
+    # Function to delete the selected playlist
     def delete_playlist():
         selected_playlist = playlist_name_entry.get()
         if not selected_playlist:
@@ -144,7 +160,7 @@ def open_playlists_window():
         else:
             messagebox.showerror("Error", f"Playlist '{selected_playlist}' does not exist.")
 
-    # Create an entry to enter the name of a new playlist
+    # Entry to create a new playlist
     playlist_name_entry = ctk.CTkEntry(playlists_window, placeholder_text="Enter playlist name...")
     playlist_name_entry.pack(pady=10)
 
