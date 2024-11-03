@@ -23,7 +23,7 @@ label_width = 25  # Number of characters to display at a time
 space_padding = 5  # Additional space on each side
 
 # Load the audio file to get its duration
-sound = pygame.mixer.Sound(f"music/{track_name}")
+sound = pygame.mixer.Sound(f"../pythonProject/music/{track_name}" )
 total_duration = sound.get_length()
 
 def update_timer():
@@ -55,7 +55,7 @@ def toggle_play_pause():
         is_playing = True
 
         if progress_bar.get() == 0.0:  # Check if the progress bar is at 0 (track ended)
-            pygame.mixer.music.load(f"music/{track_name}")  # Load the music file
+            pygame.mixer.music.load(f"../pythonProject/music/{track_name}" )  # Load the music file
             pygame.mixer.music.play(loops=0)  # Play the music from the beginning
             start_time = time.time()  # Reset start_time to current time
             play_pause_button.configure(text="❚❚ Pause")  # Change button text
@@ -115,7 +115,7 @@ def set_progress(event):
             update_timer()  # Update the timer immediately
     else:
         # Music isn't playing, so we can restart it from the new position
-        pygame.mixer.music.load(f"music/{track_name}")
+        pygame.mixer.music.load(f"../pythonProject/music/{track_name}" )
         pygame.mixer.music.play(start=position)  # Start playing from the new position
         start_time = time.time() - position
         is_playing = True
