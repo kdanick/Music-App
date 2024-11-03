@@ -3,8 +3,8 @@ import customtkinter as ctk
 import time
 import pygame
 from CTkListbox import *
-from CTkMessagebox import *
 from tkinter import filedialog
+from mutagen.mp3 import MP3  # Import to get duration of MP3 files
 
 pygame.mixer.init()
 
@@ -16,7 +16,7 @@ root.configure(padx=20, pady=20)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(1, weight=2)
 
-total_duration = 230
+total_duration = 0
 is_playing = False
 start_time = 0
 
@@ -57,6 +57,7 @@ def set_progress(event):
         pygame.mixer.music.unpause()
         update_timer()
 
+
 sidebar_frame = ctk.CTkFrame(root)
 sidebar_frame.grid(row=0, column=0, sticky="ns", padx=(0, 0))
 
@@ -76,38 +77,40 @@ manage_playlist_button.grid(row=3, column=0, pady=5)
 
 controls_frame = ctk.CTkFrame(root)
 controls_frame.grid(row=1, column=0, columnspan=2, pady=(0, 0), sticky="ew")
-controls_frame.grid_columnconfigure(0, weight=1)
-controls_frame.grid_columnconfigure(1, weight=0)
+controls_frame.grid_columnconfigure(0, weight=0)
+controls_frame.grid_columnconfigure(1, weight=1)
 controls_frame.grid_columnconfigure(2, weight=0)
 controls_frame.grid_columnconfigure(3, weight=0)
 controls_frame.grid_columnconfigure(4, weight=0)
 controls_frame.grid_columnconfigure(5, weight=0)
+controls_frame.grid_columnconfigure(6, weight=0)
+controls_frame.grid_columnconfigure(7, weight=0)
 
 current_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
 current_time_label.grid(row=0, column=0, padx=(10, 5), sticky="w")
 
 total_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
-total_time_label.grid(row=0, column=6, padx=(5, 10), sticky="e")
+total_time_label.grid(row=0, column=7, padx=(5, 10), sticky="e")
 
 progress_bar = ctk.CTkProgressBar(controls_frame)
-progress_bar.grid(row=0, column=1, columnspan=5, sticky="ew", pady=(10, 0))
+progress_bar.grid(row=0, column=1, columnspan=6, sticky="ew", pady=(10, 0))
 progress_bar.set(0)
 progress_bar.bind("<Button-1>", set_progress)
 
 prev_button = ctk.CTkButton(controls_frame, text="◄◄", command=lambda: previous_song(), width=50)
-prev_button.grid(row=1, column=1, padx=5, pady=20)
+prev_button.grid(row=1, column=2, padx=5, pady=20)
 
 play_pause_button = ctk.CTkButton(controls_frame, text="▶ Play", command=lambda: toggle_play_pause(), height=40)
-play_pause_button.grid(row=1, column=2, padx=5, pady=20)
+play_pause_button.grid(row=1, column=3, padx=5, pady=20)
 
 next_button = ctk.CTkButton(controls_frame, text="►►", command=lambda: next_song(), width=50)
-next_button.grid(row=1, column=3, padx=5, pady=20)
+next_button.grid(row=1, column=4, padx=5, pady=20)
 
 volume_label = ctk.CTkLabel(controls_frame, text="Volume", font=("Arial", 14))
-volume_label.grid(row=1, column=4, padx=(10, 5))
+volume_label.grid(row=1, column=5, padx=(10, 5))
 
 volume_slider = ctk.CTkSlider(controls_frame, from_=0, to=100, command=set_volume)
-volume_slider.grid(row=1, column=5, padx=(0, 10), sticky="ew")
+volume_slider.grid(row=1, column=6, padx=(0, 10), sticky="ew")
 volume_slider.configure(width=150)
 
 visual_frame = ctk.CTkFrame(root)
@@ -123,7 +126,6 @@ add_songs_button = ctk.CTkButton(manage_playlist_frame, text="Add Songs", comman
 add_songs_button.grid(row=0, column=0, pady=5, padx=20)
 
 # Routes to directories
-
 songs_folder = "music/"
 music_dir = os.path.dirname(os.path.realpath(__file__))
 full_path_backslash = os.path.join(music_dir, songs_folder)
@@ -140,57 +142,61 @@ def add_songs():
 
     if songs:
         for song in songs:
-            print(full_path)
-            song_name = song.replace(full_path, "")
-            final_song_name = song_name.replace(".mp3", "")
-            listbox.insert("end", final_song_name)
-            print(song)
-            print(final_song_name)
+            song_name = os.path.basename(song).replace(".mp3", "")
+            listbox.insert("end", song_name)
 
 
 def start_music(song_path, title):
+    global total_duration, start_time
     show_frame(visual_frame)
-    global is_playing
     pygame.mixer.music.stop()
     pygame.mixer.music.load(song_path)
     pygame.mixer.music.play(loops=0)
+
+    # Get duration of the song
+    audio = MP3(song_path)
+    total_duration = audio.info.length
+    total_time_label.configure(text=time.strftime("%M:%S", time.gmtime(total_duration)))
+
+    start_time = time.time()  # Initialize start time
+    global is_playing
     is_playing = True
     play_pause_button.configure(text="❚❚ Pause")
-
     song_label.configure(text=title)
+    progress_bar.set(0)  # Reset progress bar at the start
 
 
 def play_song():
     selected_song = listbox.get(listbox.curselection())
-    song = f"{full_path}{selected_song}.mp3"
-    start_music(song, selected_song)
+    song_path = f"{full_path}{selected_song}.mp3"
+    start_music(song_path, selected_song)
 
 
 def previous_song():
-    prev_song = listbox.get(listbox.curselection() - 1)
-    song = f"{full_path}{prev_song}.mp3"
-    start_music(song, prev_song)
+    index = listbox.curselection()[0]
+    if index > 0:
+        prev_song = listbox.get(index - 1)
+        song_path = f"{full_path}{prev_song}.mp3"
+        start_music(song_path, prev_song)
 
 
 def next_song():
-    next_s = listbox.get(listbox.curselection() + 1)
-    song = f"{full_path}{next_s}.mp3"
-    start_music(song, next_s)
+    index = listbox.curselection()[0]
+    if index < listbox.size() - 1:
+        next_song = listbox.get(index + 1)
+        song_path = f"{full_path}{next_song}.mp3"
+        start_music(song_path, next_song)
 
 
 def toggle_play_pause():
     global is_playing
-    is_playing = not is_playing
-
     if is_playing:
-        pygame.mixer.music.unpause()
-        play_pause_button.configure(text="❚❚ Pause")
-        is_playing = True
-
-    else:
         pygame.mixer.music.pause()
         play_pause_button.configure(text="▶ Play")
-        is_playing = False
+    else:
+        pygame.mixer.music.unpause()
+        play_pause_button.configure(text="❚❚ Pause")
+    is_playing = not is_playing
 
 
 ctk.set_appearance_mode("system")
