@@ -14,7 +14,7 @@ root.geometry("800x610")
 root.configure(padx=20, pady=20)
 
 root.grid_rowconfigure(0, weight=1)
-root.grid_columnconfigure(1, weight=2)
+root.grid_columnconfigure(1, weight=1)
 
 total_duration = 0
 is_playing = False
@@ -61,16 +61,10 @@ def set_progress(event):
 sidebar_frame = ctk.CTkFrame(root)
 sidebar_frame.grid(row=0, column=0, sticky="ns", padx=(0, 0))
 
-search_bar = ctk.CTkEntry(sidebar_frame, placeholder_text="Search...", width=180)
-search_bar.grid(row=0, column=0, sticky="ns", padx=(0, 0))
-
 listbox = CTkListbox(sidebar_frame)
 listbox.grid(row=1, column=0, sticky="ns", pady=10)
 listbox.bind("<<ListboxSelect>>", lambda event: play_song())
 
-create_playlist_button = ctk.CTkButton(sidebar_frame, text="New Playlist",
-                                       command=lambda: show_frame(create_playlist_frame))
-create_playlist_button.grid(row=2, column=0, pady=5)
 manage_playlist_button = ctk.CTkButton(sidebar_frame, text="Manage Playlist",
                                        command=lambda: show_frame(manage_playlist_frame))
 manage_playlist_button.grid(row=3, column=0, pady=5)
@@ -82,18 +76,19 @@ controls_frame.grid_columnconfigure(1, weight=1)
 controls_frame.grid_columnconfigure(2, weight=0)
 controls_frame.grid_columnconfigure(3, weight=0)
 controls_frame.grid_columnconfigure(4, weight=0)
-controls_frame.grid_columnconfigure(5, weight=0)
+controls_frame.grid_columnconfigure(5, weight=1)
 controls_frame.grid_columnconfigure(6, weight=0)
 controls_frame.grid_columnconfigure(7, weight=0)
+controls_frame.grid_columnconfigure(8, weight=0)
 
 current_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
 current_time_label.grid(row=0, column=0, padx=(10, 5), sticky="w")
 
 total_time_label = ctk.CTkLabel(controls_frame, text="00:00", font=("Arial", 14))
-total_time_label.grid(row=0, column=7, padx=(5, 10), sticky="e")
+total_time_label.grid(row=0, column=8, padx=(5, 10), sticky="e")
 
 progress_bar = ctk.CTkProgressBar(controls_frame)
-progress_bar.grid(row=0, column=1, columnspan=6, sticky="ew", pady=(10, 0))
+progress_bar.grid(row=0, column=1, columnspan=7, sticky="ew", pady=(10, 0))
 progress_bar.set(0)
 progress_bar.bind("<Button-1>", set_progress)
 
@@ -107,10 +102,10 @@ next_button = ctk.CTkButton(controls_frame, text="►►", command=lambda: next_
 next_button.grid(row=1, column=4, padx=5, pady=20)
 
 volume_label = ctk.CTkLabel(controls_frame, text="Volume", font=("Arial", 14))
-volume_label.grid(row=1, column=5, padx=(10, 5))
+volume_label.grid(row=1, column=6, padx=(10, 5))
 
 volume_slider = ctk.CTkSlider(controls_frame, from_=0, to=100, command=set_volume)
-volume_slider.grid(row=1, column=6, padx=(0, 10), sticky="ew")
+volume_slider.grid(row=1, column=7, padx=(0, 10), sticky="ew")
 volume_slider.configure(width=150)
 
 visual_frame = ctk.CTkFrame(root)
@@ -165,27 +160,60 @@ def start_music(song_path, title):
     song_label.configure(text=title)
     progress_bar.set(0)  # Reset progress bar at the start
 
+    update_timer()
+
 
 def play_song():
     selected_song = listbox.get(listbox.curselection())
     song_path = f"{full_path}{selected_song}.mp3"
+
+    index = listbox.curselection()
     start_music(song_path, selected_song)
 
 
 def previous_song():
-    index = listbox.curselection()[0]
-    if index > 0:
-        prev_song = listbox.get(index - 1)
+    previous_s = 0
+    if listbox.curselection() == 0:
+        previous_s = listbox.size()-1
+        prev_song = listbox.get(previous_s)
         song_path = f"{full_path}{prev_song}.mp3"
-        start_music(song_path, prev_song)
+
+    else:
+
+        prev_song = listbox.get(listbox.curselection() - 1)
+        song_path = f"{full_path}{prev_song}.mp3"
+
+    index1 = listbox.curselection()
+    index2 = listbox.curselection()-1
+
+    if index2<0:
+        index2 = previous_s
+
+    listbox.deactivate(index1)
+    listbox.activate(index2)
+    start_music(song_path, prev_song)
 
 
 def next_song():
-    index = listbox.curselection()[0]
-    if index < listbox.size() - 1:
-        next_song = listbox.get(index + 1)
-        song_path = f"{full_path}{next_song}.mp3"
-        start_music(song_path, next_song)
+
+    if listbox.curselection() + 2 > listbox.size():
+        next_s = listbox.get(0)
+        song_path = f"{full_path}{next_s}.mp3"
+
+    else:
+
+        next_s = listbox.get(listbox.curselection() + 1)
+        song_path = f"{full_path}{next_s}.mp3"
+
+    index1 = listbox.curselection()
+    index2 = listbox.curselection()+1
+
+    if (index2 + 1) > listbox.size():
+        index2 = 0
+
+    listbox.deactivate(index1)
+    listbox.activate(index2)
+    start_music(song_path, next_s)
 
 
 def toggle_play_pause():
