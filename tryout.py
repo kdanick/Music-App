@@ -61,6 +61,9 @@ def set_progress(event):
 sidebar_frame = ctk.CTkFrame(root)
 sidebar_frame.grid(row=0, column=0, sticky="ns", padx=(0, 0))
 
+search_bar = ctk.CTkEntry(sidebar_frame, placeholder_text="Search...", width=180)
+search_bar.grid(row=0, column=0, sticky="ns", padx=(0, 0))
+
 listbox = CTkListbox(sidebar_frame)
 listbox.grid(row=1, column=0, sticky="ns", pady=10)
 listbox.bind("<<ListboxSelect>>", lambda event: play_song())
@@ -126,6 +129,7 @@ music_dir = os.path.dirname(os.path.realpath(__file__))
 full_path_backslash = os.path.join(music_dir, songs_folder)
 full_path = full_path_backslash.replace("\\", "/")
 
+song_list = []
 
 def show_frame(frame):
     frame.tkraise()
@@ -134,11 +138,30 @@ def show_frame(frame):
 def add_songs():
     songs = filedialog.askopenfilenames(initialdir="music/", title="Choose a song",
                                         filetypes=(("mp3 Files", "*.mp3"),))
-
     if songs:
         for song in songs:
             song_name = os.path.basename(song).replace(".mp3", "")
             listbox.insert("end", song_name)
+            song_list.append((song_name, song))
+            # song_name = os.path.basename(song).replace(".mp3", "")
+            # listbox.insert("end", song_name)
+
+def filter_listbox(event):
+    search_term = search_bar.get().lower()
+    print(search_term)
+    listbox.delete(0, "end")
+
+    if search_term == "":
+        for title, _ in song_list:
+            listbox.insert("end", title)
+    else:
+        print("Entering else")
+        for title, path in song_list:
+            if search_term in title.lower():
+                listbox.insert("end", title)
+
+search_bar.bind("<Key>", filter_listbox)
+
 
 
 def start_music(song_path, title):
