@@ -51,7 +51,7 @@ Place your `.mp3` files in the `music/` directory.
 ## Run the App:
 Launch the application by executing the Python script:
 ```bash
-python groove.py
+python tryout.py
 ```
 ---
 
