@@ -78,11 +78,11 @@ Feel free to contact us with any questions or feedback!
 
 ## Team
 This project was developed collaboratively by:
-- **Joy Ndira (https://github.com/JoyNdira)**
-- **Elsa Bucagu (https://github.com/Bucagu)**
-- **Madina Sued (https://github.com/Madina2028)**
-- **Dean Adhiambo (https://github.com/NihilityStorm)**
-- **Danick Kirenga (https://github.com/kdanick/)**
+- **[Joy Ndira](https://github.com/JoyNdira)**
+- **[Elsa Bucagu](https://github.com/Bucagu)**
+- **[Madina Sued](https://github.com/Madina2028)**
+- **[Dean Adhiambo](https://github.com/NihilityStorm)**
+- **[Danick Kirenga](https://github.com/kdanick/)**
 
 ---
 Happy Listening 🎵
